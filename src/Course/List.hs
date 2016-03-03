@@ -282,11 +282,8 @@ find f (x :. xs) = if f x then Full x else find f xs
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 = lengthGT4' 0
-  where
-    lengthGT4' :: Int -> List a -> Bool
-    lengthGT4' n Nil       = n > 4
-    lengthGT4' n (_ :. xs) = n > 4 || lengthGT4' (n + 1) xs
+lengthGT4 (_ :. _ :. _ :. _ :. _ :. _) = True
+lengthGT4 _                            = False
 
 -- | Reverse a list.
 --
