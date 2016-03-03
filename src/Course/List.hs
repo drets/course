@@ -201,8 +201,7 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap _ Nil       = Nil
-flatMap f (x :. xs) = f x ++ flatMap f xs
+flatMap f = flatten . map f
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
@@ -241,9 +240,9 @@ seqOptional ::
 seqOptional = seqOptional' Nil
   where
     seqOptional' :: List a -> List (Optional a) -> Optional (List a)
-    seqOptional' acc Nil            = Full acc
+    seqOptional' acc Nil            = Full (reverse acc)
     seqOptional' _   (Empty :. _)   = Empty
-    seqOptional' acc (Full x :. xs) = seqOptional' (acc ++ (x :. Nil)) xs
+    seqOptional' acc (Full x :. xs) = seqOptional' (x :. acc) xs
 
 -- | Find the first element in the list matching the predicate.
 --
@@ -283,7 +282,11 @@ find f (x :. xs) = if f x then Full x else find f xs
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 xs = length xs > 4
+lengthGT4 = lengthGT4' 0
+  where
+    lengthGT4' :: Int -> List a -> Bool
+    lengthGT4' n Nil       = n > 4
+    lengthGT4' n (_ :. xs) = n > 4 || lengthGT4' (n + 1) xs
 
 -- | Reverse a list.
 --
