@@ -120,9 +120,8 @@ instance Applicative Optional where
     Optional (a -> b)
     -> Optional a
     -> Optional b
-  Empty  <*> _      = Empty
-  _      <*> Empty  = Empty
   Full f <*> Full x = Full $ f x
+  _      <*> _      = Empty
 
 -- | Insert into a constant function.
 --
@@ -178,7 +177,7 @@ lift2 ::
   -> f a
   -> f b
   -> f c
-lift2 h fa fb = (h <$> fa) <*> fb
+lift2 h fa fb = h <$> fa <*> fb
 
 -- | Apply a ternary function in the environment.
 --
@@ -209,7 +208,7 @@ lift3 ::
   -> f b
   -> f c
   -> f d
-lift3 h fa fb fc = lift2 h fa fb <*> fc
+lift3 h fa fb fc = h <$> fa <*> fb <*> fc
 
 -- | Apply a quaternary function in the environment.
 --
@@ -241,7 +240,7 @@ lift4 ::
   -> f c
   -> f d
   -> f e
-lift4 h fa fb fc fd = lift3 h fa fb fc <*> fd
+lift4 h fa fb fc fd = h <$> fa <*> fb <*> fc <*> fd
 
 -- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.
@@ -266,7 +265,7 @@ lift4 h fa fb fc fd = lift3 h fa fb fc <*> fd
   f a
   -> f b
   -> f b
-(*>) = lift2 seq
+(*>) = lift2 $ flip const
 
 -- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
@@ -364,7 +363,11 @@ filtering ::
   -> List a
   -> f (List a)
 filtering _ Nil       = pure Nil
-filtering f (x :. xs) = undefined
+filtering f (x :. xs) = filt <$> f x <*> filtering f xs
+  where
+    filt True ys = x :. ys
+    filt _    ys = ys
+
 -----------------------
 -- SUPPORT LIBRARIES --
 -----------------------
