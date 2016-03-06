@@ -369,10 +369,10 @@ instance BindAndPure IO where
 
 sequence :: BindAndPure f => [f a] -> f [a]
 sequence = foldr (\a as ->
-             bind (\a' ->
-             bind (\as' ->
-             pure (a' : as')) as) a)
-           (pure [])
+                   (\a' ->
+                     (\as' ->
+                       pure (a' : as')) `bind` as) `bind` a)
+                 (pure [])
 
 class BindAndPure f where
   bind ::
