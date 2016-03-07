@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -73,11 +74,7 @@ type FilePath =
 run ::
   Chars
   -> IO ()
-run path = do
-  content <- readFile path
-  let fileNames = lines content
-  files <- getFiles fileNames
-  printFiles files
+run path = readFile path >>= getFiles . lines >>= printFiles
 
 getFiles ::
   List FilePath
@@ -87,14 +84,12 @@ getFiles = sequence . map getFile
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile path = do
-  content <- readFile path
-  return (path, content)
+getFile path = (path,) <$> readFile path
 
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles xs = foldRight (*>) (pure ()) (map (uncurry printFile) xs)
+printFiles = void . sequence . map (uncurry printFile)
 
 printFile ::
   FilePath
