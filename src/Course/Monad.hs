@@ -68,7 +68,7 @@ infixr 1 =<<
   f (a -> b)
   -> f a
   -> f b
-m1 <*> m2 = (\x1 -> (return . x1) =<< m2) =<< m1
+m1 <*> m2 = (\x1 -> return . x1 =<< m2) =<< m1
 
 infixl 4 <*>
 
