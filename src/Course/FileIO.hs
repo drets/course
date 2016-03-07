@@ -60,12 +60,8 @@ the contents of c
 -}
 
 -- /Tip:/ use @getArgs@ and @run@
-main ::
-  IO ()
-main = do
-  args <- getArgs
-  let (arg :. _) = args
-  run arg
+main :: IO ()
+main = getArgs >>= \(arg :. _) -> run arg
 
 type FilePath =
   Chars
