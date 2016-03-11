@@ -63,8 +63,8 @@ instance Applicative (State s) where
     -> State s a
     -> State s b
   f <*> g = State $ \s -> let (f', s') = runState f s
-                              (a, s'') = runState g s'
-                          in (f' a, s'')
+                              (g', s'') = runState g s'
+                          in (f' g', s'')
 
 -- | Implement the `Bind` instance for `State s`.
 --
@@ -139,7 +139,7 @@ findM _ Nil = return Empty
 findM f (x :. xs) = do
   cond <- f x
   if cond
-    then return $ return x
+    then return $ Full x
     else findM f xs
 
 -- | Find the first element in a `List` that repeats.
