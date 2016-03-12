@@ -293,25 +293,26 @@ log1 = Logger . pure
 -- >>> distinctG $ listh [1,2,3,2,6,106]
 -- Logger ["even number: 2","even number: 2","even number: 6","aborting > 100: 106"] Empty
 distinctG :: (Integral a, Show a) => List a -> Logger Chars (Optional (List a))
-distinctG xs = runOptionalT $ evalT (filtering (distinctG' S.notMember) xs) S.empty
+distinctG = run . filtering distinctG'
   where
-    distinctG' :: (Integral a, Show a) => (a -> S.Set a -> Bool) -> a -> StateT (S.Set a) (OptionalT (Logger Chars)) Bool
-    distinctG' f x = do
-      s <- getT
-      putT (S.insert x s)
-      lift $ lift (Logger (genLogMsg x) x)
-      if x > 100
-         then lift $ OptionalT $ return Empty
-         else return $ f x s
+    distinctG' x = do
+       s <- getT
+       putT (S.insert x s)
+       when (x > 100) $ do
+         log $ "aborting > 100: " ++ show' x
+         break'
+       when (even x) $
+         log $ "even number: " ++ show' x
+       return $ S.notMember x s
 
-genLogMsg :: (Integral a, Show a) => a -> List Chars
-genLogMsg x
-  | x > 100   = addVal "aborting > 100: " x :. Nil
-  | even x    = addVal "even number: " x :. Nil
-  | otherwise = Nil
+    break' = lift $ OptionalT $ return Empty
 
-addVal :: (Integral a, Show a) => Chars -> a -> Chars
-addVal x a = x ++ show' a
+    run x = runOptionalT $ evalT x S.empty
+
+    log x = lift $ lift (Logger (x :. Nil) ())
+
+when :: (Applicative f) => Bool -> f () -> f ()
+when p s  = if p then s else pure ()
 
 instance MonadTrans OptionalT where
   lift c = OptionalT $ do
