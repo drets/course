@@ -357,11 +357,7 @@ replicateA n f = sequence $ take n $ repeat f
 -- >>> filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
 -- [[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3]]
 --
-filtering ::
-  Applicative f =>
-  (a -> f Bool)
-  -> List a
-  -> f (List a)
+filtering :: Applicative f => (a -> f Bool) -> List a -> f (List a)
 filtering _ Nil       = pure Nil
 filtering f (x :. xs) = filt <$> f x <*> filtering f xs
   where
