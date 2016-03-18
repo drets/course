@@ -7,6 +7,7 @@ import Course.Core
 import Course.List
 import Course.Functor
 import qualified Data.Set as S
+import Control.Monad
 
 -- Return all anagrams of the given string
 -- that appear in the given dictionary file.
@@ -14,8 +15,17 @@ fastAnagrams ::
   Chars
   -> Filename
   -> IO (List Chars)
-fastAnagrams =
-  error "todo: Course.FastAnagrams#fastAnagrams"
+fastAnagrams s filename = do
+  content <- readFile filename
+  let dictWords = to $ lines content
+  let anagrams = to $ permutations s
+  return $ from $ S.intersection anagrams dictWords
+
+to :: List Chars -> S.Set NoCaseString
+to xs = S.fromList $ hlist $ NoCaseString <$> xs
+
+from :: S.Set NoCaseString -> List Chars
+from s = ncString <$> listh (S.toList s)
 
 newtype NoCaseString =
   NoCaseString {
@@ -24,6 +34,9 @@ newtype NoCaseString =
 
 instance Eq NoCaseString where
   (==) = (==) `on` map toLower . ncString
+
+instance Ord NoCaseString where
+  compare a b = compare (ncString a) (ncString b)
 
 instance Show NoCaseString where
   show = show . ncString
