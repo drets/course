@@ -35,8 +35,6 @@ anagrams ::
   -> IO (List Chars)
 anagrams s filename = do
   content <- readFile filename
-  let dictWords = lines content
-  putStrLn "Anagrams: "
   return $ intersectBy equalIgnoringCase (permutations s) (lines content)
 
 -- Compare two strings for equality, ignoring case
