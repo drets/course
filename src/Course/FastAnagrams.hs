@@ -22,10 +22,10 @@ fastAnagrams s filename = do
   return $ from $ S.intersection anagrams dictWords
 
 to :: List Chars -> S.Set NoCaseString
-to xs = S.fromList $ hlist $ NoCaseString <$> xs
+to = S.fromList . hlist . fmap NoCaseString
 
 from :: S.Set NoCaseString -> List Chars
-from s = ncString <$> listh (S.toList s)
+from = fmap ncString . listh . S.toList
 
 newtype NoCaseString =
   NoCaseString {
