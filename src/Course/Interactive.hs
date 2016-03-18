@@ -83,7 +83,7 @@ data Op =
 convertInteractive ::
   IO ()
 convertInteractive = do
-  putStr "Enter string which you'd like to convert to upper-case: "
+  putStr "Please, enter string which you'd like to convert to upper-case: "
   str <- getLine
   putStrLn $ toUpper <$> str
 
@@ -144,13 +144,12 @@ reverseInteractive = do
 encodeInteractive ::
   IO ()
 encodeInteractive = do
-  putStr "Enter a string to url-encode: "
+  putStr "Please, enter a string to url-encode: "
   str <- getLine
   putStrLn (encode str)
 
 encode :: Chars -> Chars
-encode Nil       = Nil
-encode (x :. xs) = encode' x ++ encode xs
+encode = (>>= encode')
   where
     encode' :: Char -> Chars
     encode' ' '  = "%20"
