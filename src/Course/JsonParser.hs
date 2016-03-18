@@ -224,7 +224,7 @@ jsonObject :: Parser Assoc
 jsonObject = betweenSepbyComma '{' '}' field
   where
     field :: Parser (Chars, JsonValue)
-    field = (,) <$> (jsonString <* charTok ':') <*> jsonValue
+    field = (,) <$> jsonString <*> (spaces >> charTok ':' >>  jsonValue)
 
 -- | Parse a JSON value.
 --
@@ -239,13 +239,13 @@ jsonObject = betweenSepbyComma '{' '}' field
 -- >>> parse jsonObject "{ \"key1\" : true , \"key2\" : [7, false] , \"key3\" : { \"key4\" : null } }"
 -- Result >< [("key1",JsonTrue),("key2",JsonArray [JsonRational False (7 % 1),JsonFalse]),("key3",JsonObject [("key4",JsonNull)])]
 jsonValue :: Parser JsonValue
-jsonValue = JsonString <$> spaces >>> jsonString |||
-            JsonRational False <$> spaces >>> jsonNumber |||
-            JsonObject <$> spaces >>> jsonObject |||
-            JsonArray <$> spaces >>> jsonArray |||
-            (jsonNull >>= return . return JsonNull) |||
-            (jsonTrue >>= return . return JsonTrue) |||
-            (jsonFalse >>= return . return JsonFalse)
+jsonValue = JsonString <$> jsonString |||
+            JsonRational False <$> jsonNumber |||
+            JsonObject <$> jsonObject |||
+            JsonArray <$> jsonArray |||
+            return JsonNull <* jsonNull |||
+            return JsonTrue <* jsonTrue |||
+            return JsonFalse <* jsonFalse
 
 -- | Read a file into a JSON value.
 --
