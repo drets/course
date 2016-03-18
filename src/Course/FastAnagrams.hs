@@ -36,7 +36,7 @@ instance Eq NoCaseString where
   (==) = (==) `on` map toLower . ncString
 
 instance Ord NoCaseString where
-  compare a b = compare (ncString a) (ncString b)
+  compare = compare `on` ncString
 
 instance Show NoCaseString where
   show = show . ncString
