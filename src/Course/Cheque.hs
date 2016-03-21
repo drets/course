@@ -328,7 +328,9 @@ dollars xs = n' ++ d'
 appendDollars :: Chars -> Chars
 appendDollars "one" = "one dollar and "
 appendDollars ""    = "zero dollars and "
-appendDollars x     = x ++ " dollars and "
+appendDollars x     = case reverse x of
+  (' ' :. _) -> x ++ "dollars and "
+  _          -> x ++ " dollars and "
 
 appendCents :: Chars -> Chars
 appendCents "one" = "one cent"
@@ -365,6 +367,7 @@ showD1 = showDigit
 showD2 :: Digit -> Digit -> Chars
 showD2 Zero Zero = Nil
 showD2 Zero x    = showD1 x
+
 showD2 x Zero    = showTens x
 showD2 One x     = showFirstTens x
 showD2 x   y     = showTens x ++ "-" ++ showD1 y
