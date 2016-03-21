@@ -30,8 +30,7 @@ import Course.Monad
 -- >>> :set -XOverloadedStrings
 
 -- The representation of the grouping of each exponent of one thousand. ["thousand", "million", ...]
-illion ::
-  List Chars
+illion :: List Chars
 illion =
   let preillion ::
         List (Chars -> Chars)
@@ -189,29 +188,41 @@ data Digit =
   | Nine
   deriving (Eq, Enum, Bounded)
 
-showDigit ::
-  Digit
-  -> Chars
-showDigit Zero =
-  "zero"
-showDigit One =
-  "one"
-showDigit Two =
-  "two"
-showDigit Three =
-  "three"
-showDigit Four =
-  "four"
-showDigit Five =
-  "five"
-showDigit Six =
-  "six"
-showDigit Seven =
-  "seven"
-showDigit Eight =
-  "eight"
-showDigit Nine =
-  "nine"
+showTens :: Digit -> Chars
+showTens One   = "ten"
+showTens Two   = "twenty"
+showTens Three = "thirty"
+showTens Four  = "forty"
+showTens Five  = "fifty"
+showTens Six   = "sixty"
+showTens Seven = "seventy"
+showTens Eight = "eighty"
+showTens Nine  = "ninety"
+showTens _     = Nil
+
+showFirstTens :: Digit -> Chars
+showFirstTens One   = "eleven"
+showFirstTens Two   = "twelve"
+showFirstTens Three = "thirteen"
+showFirstTens Four  = "fourteen"
+showFirstTens Five  = "fifteen"
+showFirstTens Six   = "sixteen"
+showFirstTens Seven = "seventeen"
+showFirstTens Eight = "eighteen"
+showFirstTens Nine  = "nineteen"
+showFirstTens _     = Nil
+
+showDigit :: Digit -> Chars
+showDigit Zero  = "zero"
+showDigit One   = "one"
+showDigit Two   = "two"
+showDigit Three = "three"
+showDigit Four  = "four"
+showDigit Five  = "five"
+showDigit Six   = "six"
+showDigit Seven = "seven"
+showDigit Eight = "eight"
+showDigit Nine  = "nine"
 
 -- A data type representing one, two or three digits, which may be useful for grouping.
 data Digit3 =
@@ -221,31 +232,18 @@ data Digit3 =
   deriving Eq
 
 -- Possibly convert a character to a digit.
-fromChar ::
-  Char
-  -> Optional Digit
-fromChar '0' =
-  Full Zero
-fromChar '1' =
-  Full One
-fromChar '2' =
-  Full Two
-fromChar '3' =
-  Full Three
-fromChar '4' =
-  Full Four
-fromChar '5' =
-  Full Five
-fromChar '6' =
-  Full Six
-fromChar '7' =
-  Full Seven
-fromChar '8' =
-  Full Eight
-fromChar '9' =
-  Full Nine
-fromChar _ =
-  Empty
+fromChar :: Char -> Optional Digit
+fromChar '0' = Full Zero
+fromChar '1' = Full One
+fromChar '2' = Full Two
+fromChar '3' = Full Three
+fromChar '4' = Full Four
+fromChar '5' = Full Five
+fromChar '6' = Full Six
+fromChar '7' = Full Seven
+fromChar '8' = Full Eight
+fromChar '9' = Full Nine
+fromChar _   = Empty
 
 -- | Take a numeric value and produce its English output.
 --
@@ -320,8 +318,73 @@ fromChar _ =
 --
 -- >>> dollars "456789123456789012345678901234567890123456789012345678901234567890.12"
 -- "four hundred and fifty-six vigintillion seven hundred and eighty-nine novemdecillion one hundred and twenty-three octodecillion four hundred and fifty-six septendecillion seven hundred and eighty-nine sexdecillion twelve quindecillion three hundred and forty-five quattuordecillion six hundred and seventy-eight tredecillion nine hundred and one duodecillion two hundred and thirty-four undecillion five hundred and sixty-seven decillion eight hundred and ninety nonillion one hundred and twenty-three octillion four hundred and fifty-six septillion seven hundred and eighty-nine sextillion twelve quintillion three hundred and forty-five quadrillion six hundred and seventy-eight trillion nine hundred and one billion two hundred and thirty-four million five hundred and sixty-seven thousand eight hundred and ninety dollars and twelve cents"
-dollars ::
-  Chars
-  -> Chars
-dollars =
-  error "todo: Course.Cheque#dollars"
+dollars :: Chars -> Chars
+dollars xs = n' ++ d'
+  where
+    (n, d) = separate xs
+    d' = appendCents $ transform (cents $ sanitize d)
+    n' = appendDollars $ transform (sanitize n)
+
+appendDollars :: Chars -> Chars
+appendDollars "one" = "one dollar and "
+appendDollars ""    = "zero dollars and "
+appendDollars x     = x ++ " dollars and "
+
+appendCents :: Chars -> Chars
+appendCents "one" = "one cent"
+appendCents x     = x ++ " cents"
+
+transform :: Chars -> Chars
+transform xs = concat $ reverse $ zipWith addIllion (toWord <$> group (reverse xs)) illion
+  where
+    addIllion :: Chars -> Chars -> Chars
+    addIllion Nil _  = Nil
+    addIllion x  Nil = x
+    addIllion ys zs  = ys ++ " " ++ zs ++ " "
+
+concat :: List Chars -> Chars
+concat = foldRight (++) Nil
+
+group :: Chars -> List Digit3
+group Nil                 = Nil
+group (x :. Nil)          = D1 (toDigit x) :. Nil
+group (x :. y :. Nil)     = D2 (toDigit y) (toDigit x) :. Nil
+group (x :. y :. z :. zs) = D3 (toDigit z) (toDigit y) (toDigit x) :. group zs
+
+toDigit :: Char -> Digit
+toDigit x = fromChar x ?? Zero
+
+toWord :: Digit3 -> Chars
+toWord (D1 x)     = showD1 x
+toWord (D2 x y)   = showD2 x y
+toWord (D3 x y z) = showD3 x y z
+
+showD1 :: Digit -> Chars
+showD1 = showDigit
+
+showD2 :: Digit -> Digit -> Chars
+showD2 Zero Zero = Nil
+showD2 Zero x    = showD1 x
+showD2 x Zero    = showTens x
+showD2 One x     = showFirstTens x
+showD2 x   y     = showTens x ++ "-" ++ showD1 y
+
+showD3 :: Digit -> Digit -> Digit -> Chars
+showD3 Zero Zero Zero = Nil
+showD3 Zero Zero x    = showD1 x
+showD3 Zero x    y    = showD2 x y
+showD3 x Zero Zero    = showD1 x ++ " hundred"
+showD3 x y z          = showD1 x ++ " hundred and " ++ showD2 y z
+
+sanitize :: Chars -> Chars
+sanitize = filter isDigit
+
+separate :: Chars -> (Chars, Chars)
+separate = break (== '.')
+
+cents :: Chars -> Chars
+cents Nil             = "0"
+cents ('0' :. Nil)    = "0"
+cents (x :. Nil)      = x :. '0' :. Nil
+cents ('0' :. y :. _) = y :. Nil
+cents (x :. y :. _)   = x :. y :. Nil
