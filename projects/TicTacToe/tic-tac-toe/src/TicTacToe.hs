@@ -24,7 +24,7 @@ data Winner = Computer
   deriving (Eq, Show)
 
 data Position = P Int Int
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq)
 
 data Board a = B !Cell !Cell !Cell !Cell !Cell !Cell !Cell !Cell !Cell
 
@@ -202,10 +202,7 @@ exec board cell position action = do
       liftIO $ putStrLn ("Game status: " ++ show winner ++ "\n" ++ show b)
 
 getBestPos :: (NotFinished state, MonadReader Cell m) => Board state -> Cell -> m Position
-getBestPos board cell =
-  case board of
-    (B N N N N N N N N N) -> return $ P 1 1
-    _                     -> minimax board cell True
+getBestPos board cell = minimax board cell True
 
 score :: MonadReader Cell m => Board Finished -> Int -> m Int
 score board depth = do
@@ -218,9 +215,10 @@ score board depth = do
 minimax :: (NotFinished state, MonadReader Cell m) => Board state -> Cell -> Bool -> m Position
 minimax board cell flag = do
   let moves = getMoves board
-  let scores' = mapM (play board cell flag 1) moves
-  scores <- scores'
-  return $ snd $ maxmin flag (zip scores moves)
+  scores <- mapM (play board cell flag 0) moves
+  case elemIndex (maxmin flag scores) scores of
+    Just n -> return $ moves !! n
+    Nothing -> error "minimax error"
   where
     maxmin True = maximum
     maxmin False = minimum
@@ -230,22 +228,16 @@ play board cell flag depth position = do
   board' <- move board cell position
   case board' of
     Left b -> do
-      newPos <- minimax b (switch cell) (not flag)
-      play b (switch cell) flag (depth + 1) newPos
+      let newCell = switch cell
+      let newFlag = not flag
+      newPos <- minimax b newCell newFlag
+      play b newCell newFlag (depth + 1) newPos
     Right b ->
       score b depth
 
 getMoves :: NotFinished state => Board state -> [Position]
-getMoves (B c1 c2 c3 c4 c5 c6 c7 c8 c9) = toPos <$> N `elemIndices` [ c1
-                                                                    , c2
-                                                                    , c3
-                                                                    , c4
-                                                                    , c5
-                                                                    , c6
-                                                                    , c7
-                                                                    , c8
-                                                                    , c9
-                                                                    ]
+getMoves (B c1 c2 c3 c4 c5 c6 c7 c8 c9) =
+  toPos <$> N `elemIndices` [c1, c2, c3, c4, c5, c6, c7, c8, c9]
 
 switch :: Cell -> Cell
 switch X = O
